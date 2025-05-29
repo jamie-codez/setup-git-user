@@ -129,7 +129,7 @@ jobs:
     
     steps:
     - name: Test released action
-      uses: ${{ github.repository }}@${{ github.ref_name }}
+      uses: jamie-codez/setup-git-user@v1
       with:
         username: 'Release Test'
         email: 'release@example.com'
