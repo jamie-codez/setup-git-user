@@ -1,6 +1,6 @@
 # Setup git User Action
 
-A git Action to configure Git user name and email in your workflows. This action parses and validates user credentials, then sets up the Git configuration globally for subsequent steps in your workflow.
+A git Action to configure Git username and email in your workflows. This action parses and validates user credentials, then sets up the Git configuration globally for subsequent steps in your workflow.
 
 ## Features
 
@@ -77,8 +77,8 @@ jobs:
 ### Default git Remote (Automatic)
 
 ```yaml
-# This will automatically use: https://git.com/{owner}/{repo}.git
-# With token authentication if token is provided
+# This will automatically use: https://github.com/{owner}/{repo}.git
+# With token authentication if a token is provided
 - name: Setup Git User
   uses: jamie-codez/setup-git-user@v1
   with:
@@ -112,19 +112,19 @@ jobs:
 
 ## Inputs
 
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `username` | Git username to configure | Yes | - |
-| `email` | Git email to configure (must be valid email format) | Yes | - |
-| `remote-url` | Git remote origin URL | No | `https://git.com/{owner}/{repo}.git` |
-| `token` | git token for authentication | No | `${{ git.token }}` |
+| Input        | Description                                         | Required | Default                              |
+|--------------|-----------------------------------------------------|----------|--------------------------------------|
+| `username`   | Git username to configure                           | Yes      | -                                    |
+| `email`      | Git email to configure (must be valid email format) | Yes      | -                                    |
+| `remote-url` | Git remote origin URL                               | No       | `https://git.com/{owner}/{repo}.git` |
+| `token`      | git token for authentication                        | No       | `${{ git.token }}`                   |
 
 ## Outputs
 
-| Output | Description |
-|--------|-------------|
-| `configured-user` | The configured Git username |
-| `configured-email` | The configured Git email |
+| Output              | Description                          |
+|---------------------|--------------------------------------|
+| `configured-user`   | The configured Git username          |
+| `configured-email`  | The configured Git email             |
 | `configured-remote` | The configured Git remote origin URL |
 
 ## Error Handling
@@ -132,7 +132,7 @@ jobs:
 The action includes comprehensive error handling:
 
 - Validates that both username and email are provided
-- Validates email format using regex
+- Validates an email format using regex
 - Verifies that Git configuration was applied correctly
 - Exits with error code 1 if any validation fails
 
@@ -188,4 +188,4 @@ Please read our [Conduct Guide](./CODE_OF_CONDUCT.md) before participating.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE.md) file for details.
+This project is licensed under the MIT License—see the [LICENSE](./LICENSE.md) file for details.
