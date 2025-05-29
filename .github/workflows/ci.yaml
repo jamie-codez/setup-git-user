@@ -21,7 +21,7 @@ jobs:
     - name: Lint YAML files
       uses: actionshub/yamllint@main
       with:
-        path: .
+        args: .
         
     - name: Lint shell scripts
       uses: ludeeus/action-shellcheck@master
