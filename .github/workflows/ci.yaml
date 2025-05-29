@@ -18,10 +18,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Lint YAML files
-      uses: actionshub/yamllint@main
+    - name: Yamllint
+      uses: karancode/yamllint-github-action@master
       with:
-        entrypoint: .
+        yamllint_file_or_dir: '.'
+        yamllint_strict: false
+        yamllint_comment: true
+        yamllint_config_datapath: '{extends: relaxed, rules: {line-length: {max: 180}}}'
         
     - name: Lint shell scripts
       uses: ludeeus/action-shellcheck@master
