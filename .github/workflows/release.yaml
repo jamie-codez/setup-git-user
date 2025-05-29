@@ -68,6 +68,10 @@ jobs:
     needs: release
     
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Test released action
         uses: ./
         with:
