@@ -20,8 +20,6 @@ jobs:
       
     - name: Lint YAML files
       uses: actionshub/yamllint@main
-      with:
-        args: .
         
     - name: Lint shell scripts
       uses: ludeeus/action-shellcheck@master
@@ -38,33 +36,33 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Validate action.yml
+    - name: Validate action.yaml
       run: |
-        echo "Validating action.yml structure..."
+        echo "Validating action.yaml structure..."
         
         # Check required fields
-        if ! grep -q "name:" action.yml; then
-          echo "❌ Missing 'name' field in action.yml"
+        if ! grep -q "name:" action.yaml; then
+          echo "❌ Missing 'name' field in action.yaml"
           exit 1
         fi
         
-        if ! grep -q "description:" action.yml; then
-          echo "❌ Missing 'description' field in action.yml"
+        if ! grep -q "description:" action.yaml; then
+          echo "❌ Missing 'description' field in action.yaml"
           exit 1
         fi
         
-        if ! grep -q "runs:" action.yml; then
-          echo "❌ Missing 'runs' field in action.yml"
+        if ! grep -q "runs:" action.yaml; then
+          echo "❌ Missing 'runs' field in action.yaml"
           exit 1
         fi
         
-        echo "✅ action.yml validation passed"
+        echo "✅ action.yaml validation passed"
         
     - name: Check for required files
       run: |
         echo "Checking for required files..."
         
-        required_files=("README.md" "LICENSE" "action.yml")
+        required_files=("README.md" "LICENSE" "action.yaml")
         
         for file in "${required_files[@]}"; do
           if [ ! -f "$file" ]; then
@@ -91,6 +89,8 @@ jobs:
         VALIDATE_BASH: true
         VALIDATE_YAML: true
         VALIDATE_MARKDOWN: true
+        DISABLE_ERRORS: false
+        RUN_LOCAL: true
 
   documentation:
     name: Check Documentation
