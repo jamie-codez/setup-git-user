@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main,dev]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
@@ -20,6 +20,8 @@ jobs:
       
     - name: Lint YAML files
       uses: actionshub/yamllint@main
+      with:
+        entrypoint: .
         
     - name: Lint shell scripts
       uses: ludeeus/action-shellcheck@master
@@ -39,38 +41,31 @@ jobs:
     - name: Validate action.yaml
       run: |
         echo "Validating action.yaml structure..."
-        
         # Check required fields
         if ! grep -q "name:" action.yaml; then
           echo "❌ Missing 'name' field in action.yaml"
           exit 1
         fi
-        
         if ! grep -q "description:" action.yaml; then
           echo "❌ Missing 'description' field in action.yaml"
           exit 1
         fi
-        
         if ! grep -q "runs:" action.yaml; then
           echo "❌ Missing 'runs' field in action.yaml"
           exit 1
         fi
-        
         echo "✅ action.yaml validation passed"
         
     - name: Check for required files
       run: |
         echo "Checking for required files..."
-        
         required_files=("README.md" "LICENSE.md" "action.yaml")
-        
         for file in "${required_files[@]}"; do
           if [ ! -f "$file" ]; then
             echo "❌ Missing required file: $file"
             exit 1
           fi
         done
-        
         echo "✅ All required files present"
 
   security-scan:
@@ -103,16 +98,13 @@ jobs:
     - name: Check README completeness
       run: |
         echo "Checking README.md completeness..."
-        
         required_sections=("Usage" "Inputs" "Outputs" "Examples")
-        
         for section in "${required_sections[@]}"; do
           if ! grep -q "$section" README.md; then
             echo "❌ Missing section in README.md: $section"
             exit 1
           fi
         done
-        
         echo "✅ README.md completeness check passed"
         
     - name: Check for broken links
@@ -124,7 +116,7 @@ jobs:
   integration-test:
     name: Integration Test
     runs-on: ubuntu-latest
-    needs: [lint, validate-action]
+    needs: [lint,validate-action]
     
     steps:
     - name: Checkout repository
@@ -139,19 +131,16 @@ jobs:
     - name: Verify integration
       run: |
         echo "Running integration verification..."
-        
         # Test git operations work
         echo "Integration test file" > integration-test.txt
         git add integration-test.txt
         git commit -m "Integration test commit"
-        
         # Verify commit author
         AUTHOR=$(git log -1 --pretty=format:'%an')
         if [ "$AUTHOR" != "CI Integration Test" ]; then
           echo "❌ Integration test failed - wrong author: $AUTHOR"
           exit 1
         fi
-        
         echo "✅ Integration test passed"
 
   notify:

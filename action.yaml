@@ -1,6 +1,6 @@
 name: 'Setup Git User'
 description: 'Configure Git user name and email for GitHub Actions workflows'
-author: 'jamie-codez'
+author: 'Jamie Codez'
 branding:
   icon: 'user'
   color: 'blue'
@@ -126,4 +126,3 @@ runs:
         fi
         
         echo "::notice::Git configuration completed successfully"
-        

@@ -2,9 +2,9 @@ name: Test Action
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main,dev]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -28,21 +28,18 @@ jobs:
         echo "Testing Git configuration..."
         USER_NAME=$(git config --global user.name)
         USER_EMAIL=$(git config --global user.email)
-        
         if [ "$USER_NAME" != "Test User" ]; then
           echo "❌ Username not configured correctly"
           echo "Expected: Test User"
           echo "Actual: $USER_NAME"
           exit 1
         fi
-        
         if [ "$USER_EMAIL" != "test.user@example.com" ]; then
           echo "❌ Email not configured correctly"
           echo "Expected: test.user@example.com"
           echo "Actual: $USER_EMAIL"
           exit 1
         fi
-        
         echo "✅ Basic configuration test passed"
         
     - name: Verify Outputs
@@ -51,17 +48,14 @@ jobs:
         echo "Username output: ${{ steps.basic-test.outputs.configured-user }}"
         echo "Email output: ${{ steps.basic-test.outputs.configured-email }}"
         echo "Remote output: ${{ steps.basic-test.outputs.configured-remote }}"
-        
         if [ "${{ steps.basic-test.outputs.configured-user }}" != "Test User" ]; then
           echo "❌ Username output incorrect"
           exit 1
         fi
-        
         if [ "${{ steps.basic-test.outputs.configured-email }}" != "test.user@example.com" ]; then
           echo "❌ Email output incorrect"
           exit 1
         fi
-        
         echo "✅ Outputs test passed"
 
   test-custom-remote:
@@ -84,8 +78,124 @@ jobs:
       run: |
         echo "Testing custom remote configuration..."
         REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-        
         if [ "$REMOTE_URL" != "https://github.com/test/repo.git" ]; then
           echo "❌ Remote URL not configured correctly"
           echo "Expected: https://github.com/test/repo.git"
-          echo
+          echo "Actual: $REMOTE_URL"
+          exit 1
+        fi
+        echo "✅ Custom remote test passed"
+
+  test-github-actor:
+    name: Test with GitHub Actor
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Test GitHub Actor Setup
+      uses: ./
+      with:
+        username: ${{ github.actor }}
+        email: ${{ github.actor }}@users.noreply.github.com
+        
+    - name: Verify Actor Configuration
+      run: |
+        echo "Testing GitHub actor configuration..."
+        USER_NAME=$(git config --global user.name)
+        USER_EMAIL=$(git config --global user.email)
+        echo "Configured username: $USER_NAME"
+        echo "Configured email: $USER_EMAIL"
+        echo "GitHub actor: ${{ github.actor }}"
+        if [ "$USER_NAME" != "${{ github.actor }}" ]; then
+          echo "❌ Actor username not configured correctly"
+          exit 1
+        fi
+        
+        echo "✅ GitHub actor test passed"
+
+  test-validation:
+    name: Test Input Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Test Invalid Email (should fail)
+      id: invalid-email
+      continue-on-error: true
+      uses: ./
+      with:
+        username: 'Test User'
+        email: 'invalid-email'
+        
+    - name: Verify Validation Works
+      run: |
+        if [ "${{ steps.invalid-email.outcome }}" != "failure" ]; then
+          echo "❌ Email validation not working - should have failed"
+          exit 1
+        fi
+        echo "✅ Email validation test passed"
+
+  test-cross-platform:
+    name: Test Cross Platform
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Test on ${{ matrix.os }}
+      uses: ./
+      with:
+        username: 'Cross Platform User'
+        email: 'cross.platform@example.com'
+        
+    - name: Verify Cross Platform Setup
+      shell: bash
+      run: |
+        echo "Testing on ${{ matrix.os }}..."
+        USER_NAME=$(git config --global user.name)
+        USER_EMAIL=$(git config --global user.email)
+        echo "Username: $USER_NAME"
+        echo "Email: $USER_EMAIL"
+        if [ "$USER_NAME" != "Cross Platform User" ]; then
+          echo "❌ Cross platform test failed on ${{ matrix.os }}"
+          exit 1
+        fi
+        echo "✅ Cross platform test passed on ${{ matrix.os }}"
+
+  test-commit-capability:
+    name: Test Commit Capability
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Git User
+      uses: ./
+      with:
+        username: 'Commit Test User'
+        email: 'commit.test@example.com'
+        
+    - name: Test Commit Creation
+      run: |
+        echo "Testing commit capability..."
+        echo "Test commit at $(date)" > test-commit.txt
+        git add test-commit.txt
+        git commit -m "Test commit from action"
+        # Verify commit was created
+        LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+        if [ "$LAST_COMMIT_AUTHOR" != "Commit Test User" ]; then
+          echo "❌ Commit author not set correctly"
+          echo "Expected: Commit Test User"
+          echo "Actual: $LAST_COMMIT_AUTHOR"
+          exit 1
+        fi
+        echo "✅ Commit capability test passed"

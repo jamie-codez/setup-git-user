@@ -27,9 +27,7 @@ jobs:
         else
           VERSION="${{ github.event.inputs.version }}"
         fi
-        
         echo "Validating version: $VERSION"
-        
         if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           echo "❌ Invalid version format. Expected: v1.0.0"
           exit 1
@@ -47,12 +45,10 @@ jobs:
     - name: Verify functionality
       run: |
         echo "Verifying release functionality..."
-        
         # Test basic git operations
         echo "Release test file" > release-test.txt
         git add release-test.txt
         git commit -m "Release test commit"
-        
         AUTHOR=$(git log -1 --pretty=format:'%an')
         if [ "$AUTHOR" != "Release Test User" ]; then
           echo "❌ Release test failed"
@@ -86,10 +82,8 @@ jobs:
       run: |
         # Extract changelog section for this version
         VERSION_NUMBER="${{ steps.version.outputs.version_number }}"
-        
         # Get changelog content between version headers
         CHANGELOG_CONTENT=$(awk "/## \[$VERSION_NUMBER\]/,/## \[/{if(/## \[/ && !/## \[$VERSION_NUMBER\]/) exit; if(!/## \[$VERSION_NUMBER\]/) print}" CHANGELOG.md || echo "No changelog entry found")
-        
         # Save to file for multiline content
         echo "$CHANGELOG_CONTENT" > changelog_excerpt.txt
         
@@ -109,17 +103,13 @@ jobs:
       run: |
         VERSION="${{ steps.version.outputs.version }}"
         MAJOR_VERSION=$(echo $VERSION | cut -d. -f1)
-        
         echo "Updating major version tag: $MAJOR_VERSION"
-        
         # Delete existing major version tag
         git tag -d $MAJOR_VERSION 2>/dev/null || true
         git push origin :refs/tags/$MAJOR_VERSION 2>/dev/null || true
-        
         # Create new major version tag
         git tag $MAJOR_VERSION
         git push origin $MAJOR_VERSION
-        
         echo "✅ Updated major version tag: $MAJOR_VERSION"
 
   test-release:
@@ -137,19 +127,17 @@ jobs:
     - name: Verify released action
       run: |
         echo "Testing released action..."
-        
         USER_NAME=$(git config --global user.name)
         if [ "$USER_NAME" != "Release Test" ]; then
           echo "❌ Released action test failed"
           exit 1
         fi
-        
         echo "✅ Released action test passed"
 
   notify-marketplace:
     name: Notify Marketplace
     runs-on: ubuntu-latest
-    needs: [create-release, test-release]
+    needs: [create-release,test-release]
     
     steps:
     - name: Marketplace notification
