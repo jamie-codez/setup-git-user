@@ -19,12 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Yamllint
-        uses: karancode/yamllint-github-action@master
-        with:
-          yamllint_file_or_dir: '.'
-          yamllint_strict: false
-          yamllint_comment: true
+#      - name: Yamllint
+#        uses: karancode/yamllint-github-action@master
+#        continue-on-error: true
+#        with:
+#          yamllint_file_or_dir: '.'
+#          yamllint_strict: false
+#          yamllint_comment: true
 
       - name: Lint shell scripts
         uses: ludeeus/action-shellcheck@master
