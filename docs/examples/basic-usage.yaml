@@ -1,12 +1,13 @@
+---
 name: Basic Workflow
-on: [push]
+on: [ push ]
 
 jobs:
   setup-and-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Git User
         uses: jamie-codez/setup-git-user@v1
         with:

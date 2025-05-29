@@ -1,3 +1,4 @@
+---
 name: 'Setup Git User'
 description: 'Configure Git user name and email for GitHub Actions workflows'
 author: 'Jamie Codez'
@@ -78,7 +79,7 @@ runs:
         # Configure remote origin if repository exists
         if [ -d ".git" ]; then
           echo "Configuring Git remote origin..."
-          
+        
           # Check if origin already exists
           if git remote get-url origin >/dev/null 2>&1; then
             echo "::notice::Remote origin already exists, updating URL"
