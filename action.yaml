@@ -126,3 +126,4 @@ runs:
         fi
         
         echo "::notice::Git configuration completed successfully"
+        
