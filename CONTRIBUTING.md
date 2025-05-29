@@ -8,7 +8,7 @@ Thank you for considering contributing to this project! We welcome contributions
 
 If you find a bug or have a suggestion for improvement:
 
-1. Check if the issue already exists in the [Issues](/issues) section
+1. Check if the issue already exists in the [Issues](https://github.com/jamie-codez/setup-git-user/issues) section
 2. If not, create a new issue with:
    - Clear title and description
    - Steps to reproduce (for bugs)
