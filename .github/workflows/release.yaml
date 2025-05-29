@@ -69,7 +69,7 @@ jobs:
     
     steps:
       - name: Test released action
-        uses: ./
+        uses: jamie-codez/setup-git-user@v1
         with:
           username: 'Release Test'
           email: 'release@example.com'
