@@ -1,5 +1,5 @@
 ---
-name: 'Setup Git User'
+name: 'Setup GitHub/GitLab/Version Control User'
 description: 'Configure Git user name and email for GitHub Actions workflows'
 author: 'Jamie Codez'
 branding:
