@@ -1,0 +1,91 @@
+name: Test Action
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-basic:
+    name: Test Basic Functionality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Test Basic Setup
+      id: basic-test
+      uses: ./
+      with:
+        username: 'Test User'
+        email: 'test.user@example.com'
+        
+    - name: Verify Configuration
+      run: |
+        echo "Testing Git configuration..."
+        USER_NAME=$(git config --global user.name)
+        USER_EMAIL=$(git config --global user.email)
+        
+        if [ "$USER_NAME" != "Test User" ]; then
+          echo "❌ Username not configured correctly"
+          echo "Expected: Test User"
+          echo "Actual: $USER_NAME"
+          exit 1
+        fi
+        
+        if [ "$USER_EMAIL" != "test.user@example.com" ]; then
+          echo "❌ Email not configured correctly"
+          echo "Expected: test.user@example.com"
+          echo "Actual: $USER_EMAIL"
+          exit 1
+        fi
+        
+        echo "✅ Basic configuration test passed"
+        
+    - name: Verify Outputs
+      run: |
+        echo "Testing action outputs..."
+        echo "Username output: ${{ steps.basic-test.outputs.configured-user }}"
+        echo "Email output: ${{ steps.basic-test.outputs.configured-email }}"
+        echo "Remote output: ${{ steps.basic-test.outputs.configured-remote }}"
+        
+        if [ "${{ steps.basic-test.outputs.configured-user }}" != "Test User" ]; then
+          echo "❌ Username output incorrect"
+          exit 1
+        fi
+        
+        if [ "${{ steps.basic-test.outputs.configured-email }}" != "test.user@example.com" ]; then
+          echo "❌ Email output incorrect"
+          exit 1
+        fi
+        
+        echo "✅ Outputs test passed"
+
+  test-custom-remote:
+    name: Test Custom Remote URL
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Test Custom Remote
+      id: custom-remote-test
+      uses: ./
+      with:
+        username: 'Remote User'
+        email: 'remote.user@example.com'
+        remote-url: 'https://github.com/test/repo.git'
+        
+    - name: Verify Remote Configuration
+      run: |
+        echo "Testing custom remote configuration..."
+        REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+        
+        if [ "$REMOTE_URL" != "https://github.com/test/repo.git" ]; then
+          echo "❌ Remote URL not configured correctly"
+          echo "Expected: https://github.com/test/repo.git"
+          echo

@@ -1,0 +1,80 @@
+name: Example Usage of Setup GitHub User Action
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-action:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Git User
+      id: setup-user
+      uses: ./  # Use local action for testing, replace with your-username/setup-github-user@v1 when published
+      with:
+        username: 'Test User'
+        email: 'test.user@example.com'
+        # remote-url will default to current GitHub repository
+        
+    - name: Verify Git configuration
+      run: |
+        echo "Current Git user: $(git config --global user.name)"
+        echo "Current Git email: $(git config --global user.email)"
+        
+    - name: Use outputs
+      run: |
+        echo "Configured user from output: ${{ steps.setup-user.outputs.configured-user }}"
+        echo "Configured email from output: ${{ steps.setup-user.outputs.configured-email }}"
+        echo "Configured remote from output: ${{ steps.setup-user.outputs.configured-remote }}"
+        
+    - name: Test commit capability
+      run: |
+        echo "Test file created at $(date)" > test-file.txt
+        git add test-file.txt
+        git commit -m "Test commit with configured user"
+        echo "✅ Commit successful!"
+
+  test-custom-remote:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Git User with Custom Remote
+      uses: ./  # Use local action for testing
+      with:
+        username: 'Custom Remote User'
+        email: 'custom@example.com'
+        remote-url: 'https://github.com/myorg/myrepo.git'
+        
+    - name: Show custom remote configuration
+      run: |
+        echo "Git user: $(git config --global user.name)"
+        echo "Git email: $(git config --global user.email)"
+        echo "Remote origin: $(git remote get-url origin 2>/dev/null || echo 'No remote configured')"
+
+  test-with-secrets:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Git User with GitHub Actor
+      uses: ./  # Use local action for testing
+      with:
+        username: ${{ github.actor }}
+        email: ${{ github.actor }}@users.noreply.github.com
+        
+    - name: Show actor-based configuration
+      run: |
+        echo "Git configured for actor: ${{ github.actor }}"
+        echo "Git user: $(git config --global user.name)"
+        echo "Git email: $(git config --global user.email)"

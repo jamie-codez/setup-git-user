@@ -1,0 +1,128 @@
+name: 'Setup Git User'
+description: 'Configure Git user name and email for GitHub Actions workflows'
+author: 'jamie-codez'
+branding:
+  icon: 'user'
+  color: 'blue'
+
+inputs:
+  username:
+    description: 'Git username to configure'
+    required: true
+  email:
+    description: 'Git email to configure'
+    required: true
+  remote-url:
+    description: 'Git remote origin URL (defaults to GitHub repository URL)'
+    required: false
+    default: ''
+  token:
+    description: 'GitHub token for authentication (optional)'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  configured-user:
+    description: 'The configured Git username'
+    value: ${{ steps.setup.outputs.username }}
+  configured-email:
+    description: 'The configured Git email'
+    value: ${{ steps.setup.outputs.email }}
+  configured-remote:
+    description: 'The configured Git remote origin URL'
+    value: ${{ steps.setup.outputs.remote-url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Git User
+      id: setup
+      shell: bash
+      run: |
+        # Validate inputs
+        if [ -z "${{ inputs.username }}" ]; then
+          echo "::error::Username is required"
+          exit 1
+        fi
+        
+        if [ -z "${{ inputs.email }}" ]; then
+          echo "::error::Email is required"
+          exit 1
+        fi
+        
+        # Validate email format
+        if [[ ! "${{ inputs.email }}" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+          echo "::error::Invalid email format"
+          exit 1
+        fi
+        
+        # Determine remote URL
+        REMOTE_URL="${{ inputs.remote-url }}"
+        if [ -z "$REMOTE_URL" ]; then
+          # Default to GitHub repository URL with token authentication
+          if [ -n "${{ inputs.token }}" ]; then
+            REMOTE_URL="https://x-access-token:${{ inputs.token }}@github.com/${{ github.repository }}.git"
+          else
+            REMOTE_URL="https://github.com/${{ github.repository }}.git"
+          fi
+          echo "::notice::Using default GitHub remote URL"
+        else
+          echo "::notice::Using provided remote URL"
+        fi
+        
+        # Configure Git user
+        echo "Configuring Git user..."
+        git config --global user.name "${{ inputs.username }}"
+        git config --global user.email "${{ inputs.email }}"
+        
+        # Configure remote origin if repository exists
+        if [ -d ".git" ]; then
+          echo "Configuring Git remote origin..."
+          
+          # Check if origin already exists
+          if git remote get-url origin >/dev/null 2>&1; then
+            echo "::notice::Remote origin already exists, updating URL"
+            git remote set-url origin "$REMOTE_URL"
+          else
+            echo "::notice::Adding new remote origin"
+            git remote add origin "$REMOTE_URL"
+          fi
+        else
+          echo "::notice::Not a Git repository, skipping remote configuration"
+        fi
+        
+        # Set outputs
+        echo "username=${{ inputs.username }}" >> $GITHUB_OUTPUT
+        echo "email=${{ inputs.email }}" >> $GITHUB_OUTPUT
+        echo "remote-url=$REMOTE_URL" >> $GITHUB_OUTPUT
+        
+        # Log success
+        echo "::notice::Git user configured successfully"
+        echo "::notice::Username: ${{ inputs.username }}"
+        echo "::notice::Email: ${{ inputs.email }}"
+        echo "::notice::Remote URL: $REMOTE_URL"
+        
+        # Verify configuration
+        echo "Verifying Git configuration..."
+        CONFIGURED_NAME=$(git config --global user.name)
+        CONFIGURED_EMAIL=$(git config --global user.email)
+        
+        if [ "$CONFIGURED_NAME" != "${{ inputs.username }}" ]; then
+          echo "::error::Failed to configure username"
+          exit 1
+        fi
+        
+        if [ "$CONFIGURED_EMAIL" != "${{ inputs.email }}" ]; then
+          echo "::error::Failed to configure email"
+          exit 1
+        fi
+        
+        # Verify remote configuration if in a git repository
+        if [ -d ".git" ]; then
+          CONFIGURED_REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
+          if [ -n "$CONFIGURED_REMOTE" ]; then
+            echo "::notice::Remote origin configured: $CONFIGURED_REMOTE"
+          fi
+        fi
+        
+        echo "::notice::Git configuration completed successfully"

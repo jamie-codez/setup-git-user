@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  lint:
+    name: Lint Files
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Lint YAML files
+      uses: actionshub/yamllint@main
+      with:
+        path: .
+        
+    - name: Lint shell scripts
+      uses: ludeeus/action-shellcheck@master
+      with:
+        scandir: '.'
+        format: gcc
+        severity: warning
+
+  validate-action:
+    name: Validate Action
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Validate action.yml
+      run: |
+        echo "Validating action.yml structure..."
+        
+        # Check required fields
+        if ! grep -q "name:" action.yml; then
+          echo "❌ Missing 'name' field in action.yml"
+          exit 1
+        fi
+        
+        if ! grep -q "description:" action.yml; then
+          echo "❌ Missing 'description' field in action.yml"
+          exit 1
+        fi
+        
+        if ! grep -q "runs:" action.yml; then
+          echo "❌ Missing 'runs' field in action.yml"
+          exit 1
+        fi
+        
+        echo "✅ action.yml validation passed"
+        
+    - name: Check for required files
+      run: |
+        echo "Checking for required files..."
+        
+        required_files=("README.md" "LICENSE" "action.yml")
+        
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Missing required file: $file"
+            exit 1
+          fi
+        done
+        
+        echo "✅ All required files present"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Run security scan
+      uses: github/super-linter@v4
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_BASH: true
+        VALIDATE_YAML: true
+        VALIDATE_MARKDOWN: true
+
+  documentation:
+    name: Check Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Check README completeness
+      run: |
+        echo "Checking README.md completeness..."
+        
+        required_sections=("Usage" "Inputs" "Outputs" "Examples")
+        
+        for section in "${required_sections[@]}"; do
+          if ! grep -q "$section" README.md; then
+            echo "❌ Missing section in README.md: $section"
+            exit 1
+          fi
+        done
+        
+        echo "✅ README.md completeness check passed"
+        
+    - name: Check for broken links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'yes'
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [lint, validate-action]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Integration test
+      uses: ./
+      with:
+        username: 'CI Integration Test'
+        email: 'ci.integration@example.com'
+        
+    - name: Verify integration
+      run: |
+        echo "Running integration verification..."
+        
+        # Test git operations work
+        echo "Integration test file" > integration-test.txt
+        git add integration-test.txt
+        git commit -m "Integration test commit"
+        
+        # Verify commit author
+        AUTHOR=$(git log -1 --pretty=format:'%an')
+        if [ "$AUTHOR" != "CI Integration Test" ]; then
+          echo "❌ Integration test failed - wrong author: $AUTHOR"
+          exit 1
+        fi
+        
+        echo "✅ Integration test passed"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [lint, validate-action, security-scan, documentation, integration-test]
+    if: always()
+    
+    steps:
+    - name: Notify Success
+      if: needs.lint.result == 'success' && needs.validate-action.result == 'success' && needs.security-scan.result == 'success' && needs.documentation.result == 'success' && needs.integration-test.result == 'success'
+      run: echo "✅ All CI checks passed successfully!"
+      
+    - name: Notify Failure
+      if: needs.lint.result == 'failure' || needs.validate-action.result == 'failure' || needs.security-scan.result == 'failure' || needs.documentation.result == 'failure' || needs.integration-test.result == 'failure'
+      run: |
+        echo "❌ Some CI checks failed:"
+        echo "Lint: ${{ needs.lint.result }}"
+        echo "Validate: ${{ needs.validate-action.result }}"
+        echo "Security: ${{ needs.security-scan.result }}"
+        echo "Documentation: ${{ needs.documentation.result }}"
+        echo "Integration: ${{ needs.integration-test.result }}"
+        exit 1
